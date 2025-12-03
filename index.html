@@ -221,14 +221,15 @@ function startQuiz() {
   currentIndex = 0;
   userAnswers = new Array(selectedQuestions.length).fill("");
 
-  document.getElementById('quizSubtitle').textContent = `Répondez à ${selectedQuestions.length} questions tirées au hasard`;
+  document.getElementById('quizSubtitle').textContent =
+    `Répondez à ${selectedQuestions.length} questions tirées au hasard`;
+
   renderQuestion();
 }
 
 function renderQuestion() {
   const q = selectedQuestions[currentIndex];
 
-  // Construire le HTML des réponses
   const optionsHtml = q.answers.map((a, idx) => {
     const inputId = `q${currentIndex}_opt${idx}`;
     return `<label for="${inputId}">
@@ -236,10 +237,10 @@ function renderQuestion() {
             </label>`;
   }).join("");
 
-  // Affichage question + image
   document.getElementById('quiz').innerHTML = `
     <div class="question">
-      ${q.image ? `<img src="${q.image}" alt="Illustration question" style="max-width:100%; height:auto; margin-bottom:10px; border-radius:6px;">` : ''}
+      ${q.image ? `<img src="${q.image}" alt="Illustration question"
+      style="max-width:100%; height:auto; margin-bottom:10px; border-radius:6px;">` : ''}
       <p>⚙️ <strong>Question ${currentIndex + 1} :</strong> ${q.text}</p>
       <div class="answers">${optionsHtml}</div>
       <div style="margin-top:15px; text-align:center;">
@@ -252,12 +253,10 @@ function renderQuestion() {
 
   const nextBtn = document.getElementById('nextBtnInternal');
 
-  // Activer le bouton après sélection
   document.querySelectorAll('input[name="q"]').forEach(radio => {
     radio.addEventListener('change', () => { nextBtn.disabled = false; });
   });
 
-  // Clic sur le bouton : enregistrer la réponse et passer à la suite
   nextBtn.addEventListener('click', () => {
     const selected = document.querySelector('input[name="q"]:checked');
     if (!selected) return;
@@ -284,38 +283,57 @@ function buildResultObject() {
     if(given === q.correct) score++;
     return { question:q.text, given, correct:q.correct };
   });
-  return { timestamp: now.toISOString(), candidate:candidateName, score, total:selectedQuestions.length, details, quiz:QUIZ_NAME };
+  return {
+    timestamp: now.toISOString(),
+    candidate:candidateName,
+    score,
+    total:selectedQuestions.length,
+    details,
+    quiz:QUIZ_NAME
+  };
+}
+
+function showResults() {
+  document.getElementById('quiz').innerHTML = `
+    <div class="question">
+      <p>⚙️ Vérification de vos réponses...</p>
+    </div>
+  `;
+  document.getElementById('saveStatus').textContent = '';
+  sendResults();
 }
 
 function sendResults() {
   const payload = buildResultObject();
   const statusEl = document.getElementById('saveStatus');
-  if (!RESULTS_ENDPOINT) { statusEl.textContent="Aucun endpoint configuré."; return; }
 
   statusEl.textContent = "Envoi en cours...";
+
   fetch(RESULTS_ENDPOINT, {
-    method:"POST", mode:"no-cors",
+    method:"POST",
+    mode:"no-cors",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify(payload)
-  }).then(()=>{ statusEl.textContent="Envoi réussi ✔️"; })
-    .catch(err=>{ statusEl.textContent="Erreur: "+err.message; });
-}
+  })
+  .then(() => {
+    statusEl.textContent = "Envoi réussi ✔️";
 
-function showResults() {
-  document.getElementById('quiz').innerHTML = `<div class="question"><p>⚙️ Vérification de vos réponses...</p></div>`;
-  document.getElementById('saveStatus').textContent = '';
-  sendResults();
-  const score = userAnswers.filter((a,i)=>a===selectedQuestions[i].correct).length;
-  const timestamp = formatDateTime(new Date().toISOString());
+    const score = payload.score;
+    const timestamp = formatDateTime(payload.timestamp);
 
-  document.getElementById('quiz').innerHTML = `
-    <div class="question">
-      <p>🏷️ Candidat : <strong>${candidateName}</strong></p>
-      <p>🏁 Résultat : <span style="color:var(--orange); font-weight:700;">${score}</span> / ${selectedQuestions.length}</p>
-      <p>⏱️ Réalisé le : <strong>${timestamp}</strong></p>
-    </div>
-  `;
-  document.getElementById('restartBtn').style.display='inline-block';
+    document.getElementById('quiz').innerHTML = `
+      <div class="question">
+        <p>🏷️ Candidat : <strong>${payload.candidate}</strong></p>
+        <p>🏁 Résultat : <span style="color:var(--orange); font-weight:700;">${score}</span> / ${payload.total}</p>
+        <p>⏱️ Réalisé le : <strong>${timestamp}</strong></p>
+      </div>
+    `;
+
+    document.getElementById('restartBtn').style.display = 'inline-block';
+  })
+  .catch(err => {
+    statusEl.textContent = "Erreur: " + err.message;
+  });
 }
 
 /* ============================ */

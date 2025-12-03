@@ -322,7 +322,7 @@ function startQuiz() {
   document.getElementById('restartBtn').style.display = 'none';
   document.getElementById('saveStatus').textContent = '';
 
-  selectedQuestions = getRandomQuestions(3);
+  selectedQuestions = getRandomQuestions(20);
   currentIndex = 0;
   userAnswers = new Array(selectedQuestions.length).fill("");
 

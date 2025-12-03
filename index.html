@@ -277,21 +277,23 @@ function renderQuestion() {
 
   // injecter le HTML de la question + bouton interne
   document.getElementById('quiz').innerHTML = `
-    <div class="question">
-      <p>⚙️ <strong>Question ${currentIndex + 1} :</strong> ${q.text}</p>
-      <div class="answers">
-        ${optionsHtml}
-      </div>
+  <div class="question">
+    ${q.image ? `<img src="${q.image}" alt="Illustration question" style="max-width:100%; height:auto; margin-bottom:10px; border-radius:6px;">` : ''}
+    
+    <p>⚙️ <strong>Question ${currentIndex + 1} :</strong> ${q.text}</p>
 
-      <!-- Bouton intégré dans la carte (Suivant / Terminer) -->
-      <div style="margin-top:15px; text-align:center;">
-        <button id="nextBtnInternal" disabled>
-          ${(currentIndex === selectedQuestions.length - 1) ? "🏁 Terminer" : "➡️ Suivant"}
-        </button>
-      </div>
+    <div class="answers">
+      ${optionsHtml}
     </div>
-  `;
 
+    <!-- Bouton intégré dans la carte (Suivant / Terminer) -->
+    <div style="margin-top:15px; text-align:center;">
+      <button id="nextBtnInternal" disabled>
+        ${(currentIndex === selectedQuestions.length - 1) ? "🏁 Terminer" : "➡️ Suivant"}
+      </button>
+    </div>
+  </div>
+`;
   // récupération du bouton interne et association de l'action
   const nextBtn = document.getElementById('nextBtnInternal');
   nextBtn.addEventListener('click', nextQuestion);

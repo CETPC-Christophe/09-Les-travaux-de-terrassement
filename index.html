@@ -266,7 +266,6 @@ function renderQuestion() {
 
   // construire les options (radio)
   const optionsHtml = q.answers.map((a, idx) => {
-    // on ajoute un id unique pour le label-for si besoin
     const inputId = `q${currentIndex}_opt${idx}`;
     return `<label for="${inputId}">
               <input id="${inputId}" type="radio" name="q" value="${a}">
@@ -274,35 +273,42 @@ function renderQuestion() {
             </label>`;
   }).join("");
 
-  // injecter le HTML de la question + bouton interne
+  // injecter le HTML
   document.getElementById('quiz').innerHTML = `
-  <div class="question">
-    ${q.image ? `<img src="${q.image}" alt="Illustration question" style="max-width:100%; height:auto; margin-bottom:10px; border-radius:6px;">` : ''}
-    
-    <p>⚙️ <strong>Question ${currentIndex + 1} :</strong> ${q.text}</p>
-
-    <div class="answers">
-      ${optionsHtml}
+    <div class="question">
+      ${q.image ? `<img src="${q.image}" alt="Illustration question" style="max-width:100%; height:auto; margin-bottom:10px; border-radius:6px;">` : ''}
+      <p>⚙️ <strong>Question ${currentIndex + 1} :</strong> ${q.text}</p>
+      <div class="answers">${optionsHtml}</div>
+      <div style="margin-top:15px; text-align:center;">
+        <button id="nextBtnInternal" disabled>
+          ${(currentIndex === selectedQuestions.length - 1) ? "🏁 Terminer" : "➡️ Suivant"}
+        </button>
+      </div>
     </div>
+  `;
 
-    <!-- Bouton intégré dans la carte (Suivant / Terminer) -->
-    <div style="margin-top:15px; text-align:center;">
-      <button id="nextBtnInternal" disabled>
-        ${(currentIndex === selectedQuestions.length - 1) ? "🏁 Terminer" : "➡️ Suivant"}
-      </button>
-    </div>
-  </div>
-`;
-  // récupération du bouton interne et association de l'action
   const nextBtn = document.getElementById('nextBtnInternal');
-  nextBtn.addEventListener('click', nextQuestion);
 
-  // activer le bouton dès qu'une réponse est choisie
+  // activer le bouton après sélection
   document.querySelectorAll('input[name="q"]').forEach(radio => {
     radio.addEventListener('change', () => { nextBtn.disabled = false; });
   });
-}
 
+  // gérer le clic du bouton directement
+  nextBtn.addEventListener('click', () => {
+    const selected = document.querySelector('input[name="q"]:checked');
+    if (!selected) return;
+
+    userAnswers[currentIndex] = selected.value;
+
+    if (currentIndex < selectedQuestions.length - 1) {
+      currentIndex++;
+      renderQuestion(); // passer à la question suivante
+    } else {
+      showResults(); // fin du quiz
+    }
+  });
+}
 /**
  * Fonction appelée quand l'utilisateur clique sur le bouton 'Suivant' interne.
  * Elle enregistre la réponse et navigue (ou termine).
